@@ -26,3 +26,8 @@ export type WorkflowConnection = {
 };
 
 export type NodeSuggestion = SuggestNextNodesOutput;
+
+export type Connector = {
+  nodeId: string;
+  type: 'in' | 'out';
+};

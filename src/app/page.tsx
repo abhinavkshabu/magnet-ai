@@ -20,6 +20,7 @@ import type {
   WorkflowNode,
   WorkflowConnection,
   NodeSuggestion,
+  Connector,
 } from '@/lib/types';
 import { getSuggestions } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
@@ -44,6 +45,18 @@ export default function AICanvasPage() {
   const [suggestions, setSuggestions] = useState<NodeSuggestion | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+
+  const handleAddConnection = (from: Connector, to: Connector) => {
+    // Avoid self-connections and duplicate connections
+    if (from.nodeId === to.nodeId) return;
+    const exists = connections.some(
+      (c) => c.from === from.nodeId && c.to === to.nodeId
+    );
+    if (exists) return;
+
+    setConnections((prev) => [...prev, { from: from.nodeId, to: to.nodeId }]);
+  };
+
 
   const handleNodeSelect = (nodeId: string | null) => {
     setSelectedNodeId(nodeId);
@@ -120,6 +133,7 @@ export default function AICanvasPage() {
             connections={connections}
             selectedNodeId={selectedNodeId}
             onNodeSelect={handleNodeSelect}
+            onAddConnection={handleAddConnection}
             suggestions={suggestions}
             isLoadingSuggestions={isSuggesting}
             isExecuting={isExecuting}

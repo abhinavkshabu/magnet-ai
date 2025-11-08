@@ -2,13 +2,15 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { WorkflowNode } from '@/lib/types';
+import type { WorkflowNode, Connector } from '@/lib/types';
 import Image from 'next/image';
 
 type WorkflowNodeProps = {
   node: WorkflowNode;
   isSelected: boolean;
   onSelect: (nodeId: string) => void;
+  onStartConnection: (connector: Connector) => void;
+  onEndConnection: (connector: Connector) => void;
 };
 
 const NodeIcon = ({
@@ -38,18 +40,43 @@ export default function WorkflowNodeComponent({
   node,
   isSelected,
   onSelect,
+  onStartConnection,
+  onEndConnection,
 }: WorkflowNodeProps) {
   const Icon = node.icon;
 
+  const handleConnectionMouseDown = (e: React.MouseEvent, type: 'in' | 'out') => {
+    e.stopPropagation();
+    if (type === 'out') {
+      onStartConnection({ nodeId: node.id, type: 'out' });
+    }
+  };
+  
+  const handleConnectionMouseUp = (e: React.MouseEvent, type: 'in' | 'out') => {
+    e.stopPropagation();
+    if (type === 'in') {
+      onEndConnection({ nodeId: node.id, type: 'in' });
+    }
+  };
+
   return (
     <div
-      className="absolute group"
+      className="absolute group workflow-node"
       style={{ top: `${node.position.y}px`, left: `${node.position.x}px` }}
       onClick={(e) => {
         e.stopPropagation();
         onSelect(node.id);
       }}
     >
+      <div
+        className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-card border-2 border-border cursor-pointer hover:bg-primary transition-colors"
+        onMouseUp={(e) => handleConnectionMouseUp(e, 'in')}
+      />
+      <div
+        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-card border-2 border-border cursor-pointer hover:bg-primary transition-colors"
+        onMouseDown={(e) => handleConnectionMouseDown(e, 'out')}
+      />
+      
       <Card
         className={cn(
           'w-72 cursor-pointer shadow-md rounded-xl transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5',

@@ -15,6 +15,8 @@ export type WorkflowNode = {
   };
   content?: {
     url?: string;
+    imageUrl?: string;
+    imageHint?: string;
   };
 };
 

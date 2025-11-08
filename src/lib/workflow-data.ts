@@ -1,33 +1,38 @@
-import { Webhook, Bot, Mail } from 'lucide-react';
+import { Video, Bot, Image as ImageIcon, Webhook } from 'lucide-react';
 import type { WorkflowNode, WorkflowConnection } from './types';
 
 export const initialNodes: WorkflowNode[] = [
   {
     id: 'node-1',
-    name: 'Webhook Trigger',
+    name: 'Live Feed: Studio Camera 1',
     type: 'webhook',
-    description: 'Triggers on incoming HTTP request.',
-    icon: Webhook,
-    position: { x: 100, y: 200 },
+    description: 'Capturing real-time footage for daily briefing.',
+    icon: Video,
+    position: { x: 200, y: 150 },
     content: {
-      url: 'https://api.example.com/webhook/123',
+      imageUrl: 'https://picsum.photos/seed/camera/600/400',
+      imageHint: 'camera',
     },
   },
   {
     id: 'node-2',
-    name: 'Generate Text',
+    name: 'AI Model: Clip Extraction',
     type: 'llm',
-    description: 'Generates text using an AI model.',
+    description: 'Automatically extracts key segments from raw video footage.',
     icon: Bot,
-    position: { x: 480, y: 200 },
+    position: { x: 450, y: 400 },
   },
   {
     id: 'node-3',
-    name: 'Send Email',
+    name: 'Image: Extracted Thumbnail',
     type: 'output',
-    description: 'Sends the result via email.',
-    icon: Mail,
-    position: { x: 860, y: 200 },
+    description: 'A thumbnail from the extracted clip.',
+    icon: ImageIcon,
+    position: { x: 300, y: 650 },
+    content: {
+      imageUrl: 'https://picsum.photos/seed/thumbnail/600/400',
+      imageHint: 'thumbnail',
+    },
   },
 ];
 

@@ -32,7 +32,7 @@ export default function NodePropertiesSidebar({
   return (
     <aside
       className={cn(
-        'w-96 border-l bg-card text-card-foreground transition-transform transform duration-300 ease-in-out',
+        'absolute top-0 right-0 h-full w-96 border-l bg-card text-card-foreground transition-transform transform duration-300 ease-in-out z-30',
         node ? 'translate-x-0' : 'translate-x-full'
       )}
     >

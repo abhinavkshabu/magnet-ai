@@ -10,9 +10,10 @@ type NodeSuggestionsProps = {
   node: WorkflowNode;
   suggestions: NodeSuggestion | null;
   isLoading: boolean;
+  pan: { x: number; y: number };
 };
 
-export default function NodeSuggestions({ node, suggestions, isLoading }: NodeSuggestionsProps) {
+export default function NodeSuggestions({ node, suggestions, isLoading, pan }: NodeSuggestionsProps) {
   const isOpen = isLoading || (suggestions !== null && suggestions.suggestedNodes.length > 0);
 
   return (
@@ -22,8 +23,8 @@ export default function NodeSuggestions({ node, suggestions, isLoading }: NodeSu
           style={{
             position: 'absolute',
             top: node.position.y,
-            left: node.position.x + 288, // node width w-72
-            transform: 'translate(1rem, -50%)',
+            left: node.position.x,
+            transform: `translate(${pan.x + 288}px, ${pan.y}px) translate(1rem, -50%)`,
           }}
         />
       </PopoverTrigger>

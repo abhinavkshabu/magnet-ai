@@ -98,9 +98,9 @@ export default function AICanvasPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen w-screen overflow-hidden flex flex-col">
       <Header onRunWorkflow={handleRunWorkflow} />
-      <div className="flex-1 flex">
+      <div className="flex-1 flex relative overflow-hidden">
         <main className="flex-1 relative overflow-hidden">
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
             <Button size="icon" variant="outline" className="bg-card">

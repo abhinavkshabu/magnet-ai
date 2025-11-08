@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { WorkflowNode, Connector } from '@/lib/types';
+import type { WorkflowNode, Connector, CanvasMode } from '@/lib/types';
 import Image from 'next/image';
 
 type WorkflowNodeProps = {
@@ -11,6 +11,7 @@ type WorkflowNodeProps = {
   onSelect: (nodeId: string) => void;
   onStartConnection: (connector: Connector) => void;
   onEndConnection: (connector: Connector) => void;
+  canvasMode: CanvasMode;
 };
 
 const NodeIcon = ({
@@ -42,10 +43,12 @@ export default function WorkflowNodeComponent({
   onSelect,
   onStartConnection,
   onEndConnection,
+  canvasMode
 }: WorkflowNodeProps) {
   const Icon = node.icon;
 
   const handleConnectionMouseDown = (e: React.MouseEvent, type: 'in' | 'out') => {
+    if (canvasMode !== 'select') return;
     e.stopPropagation();
     if (type === 'out') {
       onStartConnection({ nodeId: node.id, type: 'out' });
@@ -53,33 +56,47 @@ export default function WorkflowNodeComponent({
   };
   
   const handleConnectionMouseUp = (e: React.MouseEvent, type: 'in' | 'out') => {
+    if (canvasMode !== 'select') return;
     e.stopPropagation();
     if (type === 'in') {
       onEndConnection({ nodeId: node.id, type: 'in' });
     }
   };
+  
+  const handleNodeClick = (e: React.MouseEvent) => {
+    if (canvasMode !== 'select') return;
+    e.stopPropagation();
+    onSelect(node.id);
+  }
 
   return (
     <div
-      className="absolute group workflow-node"
+      className={cn(
+        "absolute group workflow-node",
+        canvasMode === 'select' ? 'cursor-pointer' : 'cursor-default pointer-events-none'
+      )}
       style={{ top: `${node.position.y}px`, left: `${node.position.x}px` }}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(node.id);
-      }}
+      onClick={handleNodeClick}
     >
       <div
-        className="absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-card border-2 border-border cursor-pointer hover:bg-primary transition-colors"
+        className={cn(
+          "absolute -left-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-card border-2 border-border transition-colors",
+          canvasMode === 'select' && "cursor-pointer hover:bg-primary pointer-events-auto"
+        )}
         onMouseUp={(e) => handleConnectionMouseUp(e, 'in')}
       />
       <div
-        className="absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-card border-2 border-border cursor-pointer hover:bg-primary transition-colors"
+        className={cn(
+          "absolute -right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-card border-2 border-border transition-colors",
+          canvasMode === 'select' && "cursor-pointer hover:bg-primary pointer-events-auto"
+        )}
         onMouseDown={(e) => handleConnectionMouseDown(e, 'out')}
       />
       
       <Card
         className={cn(
-          'w-72 cursor-pointer shadow-md rounded-xl transition-all duration-200 hover:shadow-xl hover:-translate-y-0.5',
+          'w-72 shadow-md rounded-xl transition-all duration-200',
+           canvasMode === 'select' && 'hover:shadow-xl hover:-translate-y-0.5',
           isSelected
             ? 'ring-2 ring-primary/80 shadow-primary/20'
             : 'ring-1 ring-border'

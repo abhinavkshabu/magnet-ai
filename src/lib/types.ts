@@ -3,6 +3,8 @@ import type { SuggestNextNodesOutput } from '@/ai/flows/suggest-next-nodes';
 
 export type NodeType = 'webhook' | 'llm' | 'output' | 'logic' | 'iot' | 'api';
 
+export type CanvasMode = 'select' | 'pan';
+
 export type WorkflowNode = {
   id: string;
   name: string;

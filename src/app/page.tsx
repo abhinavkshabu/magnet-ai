@@ -10,6 +10,8 @@ import {
   Bot,
   Bell,
   File,
+  MousePointer,
+  Hand,
 } from 'lucide-react';
 
 import Header from '@/components/layout/header';
@@ -21,10 +23,12 @@ import type {
   WorkflowConnection,
   NodeSuggestion,
   Connector,
+  CanvasMode,
 } from '@/lib/types';
 import { getSuggestions } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const nodeCategories = [
   { icon: Zap, name: 'Trigger' },
@@ -45,6 +49,8 @@ export default function AICanvasPage() {
   const [suggestions, setSuggestions] = useState<NodeSuggestion | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
+  const [canvasMode, setCanvasMode] = useState<CanvasMode>('select');
+
 
   const handleAddConnection = (from: Connector, to: Connector) => {
     // Avoid self-connections and duplicate connections
@@ -116,6 +122,30 @@ export default function AICanvasPage() {
       <div className="flex-1 flex relative overflow-hidden">
         <main className="flex-1 relative overflow-hidden">
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
+            <div className="flex items-center gap-1 p-1 bg-card rounded-md border shadow-sm">
+                <TooltipProvider delayDuration={100}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="icon" variant={canvasMode === 'select' ? 'secondary' : 'ghost'} onClick={() => setCanvasMode('select')}>
+                        <MousePointer className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Select Tool (V)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                   <Tooltip>
+                    <TooltipTrigger asChild>
+                       <Button size="icon" variant={canvasMode === 'pan' ? 'secondary' : 'ghost'} onClick={() => setCanvasMode('pan')}>
+                        <Hand className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Pan Tool (H)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+            </div>
             <Button size="icon" variant="outline" className="bg-card">
               <Plus className="h-4 w-4" />
             </Button>
@@ -137,6 +167,7 @@ export default function AICanvasPage() {
             suggestions={suggestions}
             isLoadingSuggestions={isSuggesting}
             isExecuting={isExecuting}
+            canvasMode={canvasMode}
           />
         </main>
         <NodePropertiesSidebar

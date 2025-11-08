@@ -1,6 +1,6 @@
 'use client';
-import React, { useState, useRef, useCallback, MouseEvent } from 'react';
-import type { WorkflowNode, WorkflowConnection, NodeSuggestion, Connector } from '@/lib/types';
+import React, { useState, useRef, useCallback, MouseEvent, useEffect } from 'react';
+import type { WorkflowNode, WorkflowConnection, NodeSuggestion, Connector, CanvasMode } from '@/lib/types';
 import WorkflowNodeComponent from './workflow-node';
 import NodeConnector from './node-connector';
 import NodeSuggestions from './node-suggestions';
@@ -18,6 +18,7 @@ type AiCanvasProps = {
   suggestions: NodeSuggestion | null;
   isLoadingSuggestions: boolean;
   isExecuting: boolean;
+  canvasMode: CanvasMode;
 };
 
 const NODE_WIDTH = 288; // w-72
@@ -35,6 +36,7 @@ export default function AiCanvas({
   suggestions,
   isLoadingSuggestions,
   isExecuting,
+  canvasMode,
 }: AiCanvasProps) {
   const [view, setView] = useState({ x: 0, y: 0, zoom: 0.8 });
   const [isPanning, setIsPanning] = useState(false);
@@ -42,6 +44,17 @@ export default function AiCanvas({
   const [pointerPos, setPointerPos] = useState({ x: 0, y: 0 });
   const panStart = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      if (canvasMode === 'pan') {
+        canvas.style.cursor = 'grab';
+      } else {
+        canvas.style.cursor = 'default';
+      }
+    }
+  }, [canvasMode]);
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -61,12 +74,15 @@ export default function AiCanvas({
   };
   
   const handleMouseDown = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    if (e.target !== e.currentTarget && !(e.target as HTMLElement).closest('.workflow-node')) {
+    const isCanvasTarget = e.target === e.currentTarget;
+
+    if (canvasMode === 'pan' || (isCanvasTarget && canvasMode === 'select' && !isConnecting)) {
       panStart.current = { x: e.clientX - view.x, y: e.clientY - view.y };
       setIsPanning(true);
+      if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
       e.stopPropagation();
     }
-  }, [view.x, view.y]);
+  }, [view.x, view.y, canvasMode, isConnecting]);
 
   const handleMouseMove = useCallback((e: MouseEvent<HTMLDivElement>) => {
     const rect = canvasRef.current!.getBoundingClientRect();
@@ -82,26 +98,30 @@ export default function AiCanvas({
   }, [isPanning, view.x, view.y, view.zoom]);
 
   const handleMouseUp = useCallback(() => {
-    setIsPanning(false);
-  }, []);
+    if (isPanning) {
+      setIsPanning(false);
+       if (canvasRef.current) canvasRef.current.style.cursor = canvasMode === 'pan' ? 'grab' : 'default';
+    }
+  }, [isPanning, canvasMode]);
 
   const handleCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
+    if (e.target === e.currentTarget && canvasMode === 'select') {
       onNodeSelect(null);
       if (isConnecting) setIsConnecting(null);
     }
   };
 
   const handleStartConnection = useCallback((connector: Connector) => {
+    if (canvasMode !== 'select') return;
     setIsConnecting(connector);
-  }, []);
+  }, [canvasMode]);
   
   const handleEndConnection = useCallback((connector: Connector) => {
-    if (isConnecting) {
+    if (isConnecting && canvasMode === 'select') {
       onAddConnection(isConnecting, connector);
       setIsConnecting(null);
     }
-  }, [isConnecting, onAddConnection]);
+  }, [isConnecting, onAddConnection, canvasMode]);
 
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
 
@@ -127,7 +147,7 @@ export default function AiCanvas({
   return (
     <div
       ref={canvasRef}
-      className={cn("w-full h-full relative overflow-hidden cursor-grab", isPanning && "cursor-grabbing")}
+      className="w-full h-full relative overflow-hidden"
       onClick={handleCanvasClick}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -170,6 +190,7 @@ export default function AiCanvas({
             onSelect={onNodeSelect}
             onStartConnection={handleStartConnection}
             onEndConnection={handleEndConnection}
+            canvasMode={canvasMode}
           />
         ))}
       </div>

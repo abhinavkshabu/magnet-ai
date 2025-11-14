@@ -9,15 +9,17 @@ import {
   Combine,
   Bot,
   Bell,
-  File,
+  File as FileIcon,
   MousePointer,
   Hand,
+  Pencil,
 } from 'lucide-react';
 
 import Header from '@/components/layout/header';
 import AiCanvas from '@/components/canvas/ai-canvas';
 import NodePropertiesSidebar from '@/components/layout/node-properties-sidebar';
 import ConnectionPropertiesSidebar from '@/components/layout/connection-properties-sidebar';
+import SelectTriggerDialog from '@/components/modals/select-trigger-dialog';
 import { initialNodes, initialConnections } from '@/lib/workflow-data';
 import type {
   WorkflowNode,
@@ -25,11 +27,17 @@ import type {
   NodeSuggestion,
   Connector,
   CanvasMode,
+  NodeType,
 } from '@/lib/types';
 import { getSuggestions } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const nodeCategories = [
   { icon: Zap, name: 'Trigger' },
@@ -38,7 +46,7 @@ const nodeCategories = [
   { icon: Combine, name: 'Integrate' },
   { icon: Bot, name: 'AI Model' },
   { icon: Bell, name: 'Notify' },
-  { icon: File, name: 'File I/O' },
+  { icon: FileIcon, name: 'File I/O' },
 ];
 
 export default function AICanvasPage() {
@@ -47,19 +55,27 @@ export default function AICanvasPage() {
   const [connections, setConnections] =
     useState<WorkflowConnection[]>(initialConnections);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [selectedConnection, setSelectedConnection] = useState<WorkflowConnection | null>(null);
+  const [selectedConnection, setSelectedConnection] =
+    useState<WorkflowConnection | null>(null);
   const [suggestions, setSuggestions] = useState<NodeSuggestion | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('select');
+  const [isTriggerDialogOpen, setIsTriggerDialogOpen] = useState(false);
 
   const handleDelete = () => {
     if (selectedNodeId) {
-      setNodes(prev => prev.filter(n => n.id !== selectedNodeId));
-      setConnections(prev => prev.filter(c => c.from !== selectedNodeId && c.to !== selectedNodeId));
+      setNodes((prev) => prev.filter((n) => n.id !== selectedNodeId));
+      setConnections((prev) =>
+        prev.filter(
+          (c) => c.from !== selectedNodeId && c.to !== selectedNodeId
+        )
+      );
       setSelectedNodeId(null);
     } else if (selectedConnection) {
-      setConnections(prev => prev.filter(c => c.id !== selectedConnection.id));
+      setConnections((prev) =>
+        prev.filter((c) => c.id !== selectedConnection.id)
+      );
       setSelectedConnection(null);
     } else {
       toast({
@@ -70,6 +86,30 @@ export default function AICanvasPage() {
     }
   };
 
+  const handleAddNode = (nodeDetails: { name: string, description: string, icon: React.ElementType, type: NodeType }) => {
+    const newNode: WorkflowNode = {
+      id: `node-${Date.now()}`,
+      name: nodeDetails.name,
+      type: nodeDetails.type,
+      description: nodeDetails.description,
+      icon: nodeDetails.icon,
+      position: { x: 400, y: 400 }, // Position should be more dynamic
+    };
+    setNodes(prev => [...prev, newNode]);
+    setIsTriggerDialogOpen(false);
+    // Maybe select the new node
+    setTimeout(() => handleNodeSelect(newNode.id), 50);
+  };
+  
+  const handleAddCustomNode = () => {
+    handleAddNode({
+        name: "Custom Node",
+        description: "A custom node for your workflow.",
+        icon: Pencil,
+        type: 'api',
+    });
+  }
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't delete if user is typing in an input, textarea, etc.
@@ -77,7 +117,7 @@ export default function AICanvasPage() {
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
         return;
       }
-      
+
       if (e.key === 'Backspace' || e.key === 'Delete') {
         e.preventDefault();
         handleDelete();
@@ -91,7 +131,6 @@ export default function AICanvasPage() {
     };
   }, [selectedNodeId, selectedConnection]);
 
-
   const handleAddConnection = (from: Connector, to: Connector) => {
     // Avoid self-connections and duplicate connections
     if (from.nodeId === to.nodeId) return;
@@ -100,9 +139,16 @@ export default function AICanvasPage() {
     );
     if (exists) return;
 
-    setConnections((prev) => [...prev, { id: `${from.nodeId}-${to.nodeId}`, from: from.nodeId, to: to.nodeId, prompt: '' }]);
+    setConnections((prev) => [
+      ...prev,
+      {
+        id: `${from.nodeId}-${to.nodeId}`,
+        from: from.nodeId,
+        to: to.nodeId,
+        prompt: '',
+      },
+    ]);
   };
-
 
   const handleNodeSelect = (nodeId: string | null) => {
     setSelectedNodeId(nodeId);
@@ -113,32 +159,40 @@ export default function AICanvasPage() {
   const handleConnectionSelect = (connection: WorkflowConnection | null) => {
     setSelectedConnection(connection);
     setSelectedNodeId(null);
-  }
-  
-  const handleNodePositionChange = (nodeId: string, newPosition: { x: number, y: number }) => {
-    setNodes(currentNodes => 
-      currentNodes.map(node => 
+  };
+
+  const handleNodePositionChange = (
+    nodeId: string,
+    newPosition: { x: number; y: number }
+  ) => {
+    setNodes((currentNodes) =>
+      currentNodes.map((node) =>
         node.id === nodeId ? { ...node, position: newPosition } : node
       )
     );
   };
 
-  const handleNodeUpdate = (nodeId: string, updates: Partial<Pick<WorkflowNode, 'name' | 'description'>>) => {
-    setNodes(currentNodes =>
-      currentNodes.map(node =>
+  const handleNodeUpdate = (
+    nodeId: string,
+    updates: Partial<Pick<WorkflowNode, 'name' | 'description'>>
+  ) => {
+    setNodes((currentNodes) =>
+      currentNodes.map((node) =>
         node.id === nodeId ? { ...node, ...updates } : node
       )
     );
   };
-  
-  const handleConnectionUpdate = (connectionId: string, updates: Partial<Pick<WorkflowConnection, 'prompt'>>) => {
-    setConnections(currentConnections =>
-      currentConnections.map(conn =>
+
+  const handleConnectionUpdate = (
+    connectionId: string,
+    updates: Partial<Pick<WorkflowConnection, 'prompt'>>
+  ) => {
+    setConnections((currentConnections) =>
+      currentConnections.map((conn) =>
         conn.id === connectionId ? { ...conn, ...updates } : conn
       )
     );
   };
-
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
 
@@ -187,42 +241,57 @@ export default function AICanvasPage() {
     }, 2000 * connections.length); // Simulate execution time based on connection count
   };
 
+  const handleCategoryClick = (categoryName: string) => {
+    if (categoryName === 'Trigger') {
+      setIsTriggerDialogOpen(true);
+    }
+  };
+  
   return (
+    <>
     <div className="h-screen w-screen overflow-hidden flex flex-col">
       <Header onRunWorkflow={handleRunWorkflow} onDelete={handleDelete} />
       <div className="flex-1 flex relative overflow-hidden">
         <main className="flex-1 relative overflow-hidden">
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
             <div className="flex items-center gap-1 p-1 bg-card rounded-md border shadow-sm">
-                <TooltipProvider delayDuration={100}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button size="icon" variant={canvasMode === 'select' ? 'secondary' : 'ghost'} onClick={() => setCanvasMode('select')}>
-                        <MousePointer className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Select Tool (V)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                   <Tooltip>
-                    <TooltipTrigger asChild>
-                       <Button size="icon" variant={canvasMode === 'pan' ? 'secondary' : 'ghost'} onClick={() => setCanvasMode('pan')}>
-                        <Hand className="h-4 w-4" />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Pan Tool (H)</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+              <TooltipProvider delayDuration={100}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant={canvasMode === 'select' ? 'secondary' : 'ghost'}
+                      onClick={() => setCanvasMode('select')}
+                    >
+                      <MousePointer className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Select Tool (V)</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      size="icon"
+                      variant={canvasMode === 'pan' ? 'secondary' : 'ghost'}
+                      onClick={() => setCanvasMode('pan')}
+                    >
+                      <Hand className="h-4 w-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Pan Tool (H)</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
-            <Button size="icon" variant="outline" className="bg-card">
+            <Button size="icon" variant="outline" className="bg-card" onClick={handleAddCustomNode}>
               <Plus className="h-4 w-4" />
             </Button>
             <div className="flex items-center gap-1 p-1 bg-card rounded-md border shadow-sm">
               {nodeCategories.map((cat) => (
-                <Button key={cat.name} variant="ghost" className="gap-2">
+                <Button key={cat.name} variant="ghost" className="gap-2" onClick={() => handleCategoryClick(cat.name)}>
                   <cat.icon className="h-4 w-4 text-muted-foreground" />
                   <span>{cat.name}</span>
                 </Button>
@@ -258,5 +327,7 @@ export default function AICanvasPage() {
         />
       </div>
     </div>
+    <SelectTriggerDialog open={isTriggerDialogOpen} onOpenChange={setIsTriggerDialogOpen} onAddNode={handleAddNode} />
+    </>
   );
 }

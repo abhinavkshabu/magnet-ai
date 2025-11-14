@@ -15,6 +15,7 @@ type AiCanvasProps = {
   selectedNodeId: string | null;
   onNodeSelect: (nodeId: string | null) => void;
   onAddConnection: (from: Connector, to: Connector) => void;
+  onNodePositionChange: (nodeId: string, newPosition: { x: number, y: number }) => void;
   suggestions: NodeSuggestion | null;
   isLoadingSuggestions: boolean;
   isExecuting: boolean;
@@ -33,6 +34,7 @@ export default function AiCanvas({
   selectedNodeId,
   onNodeSelect,
   onAddConnection,
+  onNodePositionChange,
   suggestions,
   isLoadingSuggestions,
   isExecuting,
@@ -41,9 +43,37 @@ export default function AiCanvas({
   const [view, setView] = useState({ x: 0, y: 0, zoom: 0.8 });
   const [isPanning, setIsPanning] = useState(false);
   const [isConnecting, setIsConnecting] = useState<Connector | null>(null);
+  const [draggingNodeId, setDraggingNodeId] = useState<string | null>(null);
   const [pointerPos, setPointerPos] = useState({ x: 0, y: 0 });
   const panStart = useRef({ x: 0, y: 0 });
+  const dragStart = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if(e.key === ' ' && !isPanning) {
+            setIsPanning(true);
+            document.body.classList.add('panning');
+            if (canvasRef.current) canvasRef.current.style.cursor = 'grab';
+        }
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+        if(e.key === ' ') {
+            setIsPanning(false);
+            document.body.classList.remove('panning');
+            if (canvasRef.current) canvasRef.current.style.cursor = 'default';
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+        window.removeEventListener('keyup', handleKeyUp);
+    }
+  }, [isPanning]);
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -76,9 +106,10 @@ export default function AiCanvas({
   const handleMouseDown = useCallback((e: MouseEvent<HTMLDivElement>) => {
     const isCanvasTarget = e.target === e.currentTarget;
 
-    if (canvasMode === 'pan' || (isCanvasTarget && canvasMode === 'select' && !isConnecting)) {
+    if (canvasMode === 'pan' || (isCanvasTarget && !isConnecting)) {
       panStart.current = { x: e.clientX - view.x, y: e.clientY - view.y };
       setIsPanning(true);
+      document.body.classList.add('panning');
       if (canvasRef.current) canvasRef.current.style.cursor = 'grabbing';
       e.stopPropagation();
     }
@@ -92,20 +123,33 @@ export default function AiCanvas({
     };
     setPointerPos(newPointerPos);
 
-    if (isPanning && canvasRef.current) {
-      setView(v => ({...v, x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y}));
+    if (isPanning && !draggingNodeId) {
+        setView(v => ({...v, x: e.clientX - panStart.current.x, y: e.clientY - panStart.current.y}));
+    } else if (draggingNodeId) {
+        const dx = (e.clientX - dragStart.current.x) / view.zoom;
+        const dy = (e.clientY - dragStart.current.y) / view.zoom;
+        const node = nodes.find(n => n.id === draggingNodeId);
+        if(node) {
+            onNodePositionChange(draggingNodeId, { x: node.position.x + dx, y: node.position.y + dy });
+            dragStart.current = { x: e.clientX, y: e.clientY };
+        }
     }
-  }, [isPanning, view.x, view.y, view.zoom]);
+  }, [isPanning, draggingNodeId, view.zoom, nodes, onNodePositionChange]);
+
 
   const handleMouseUp = useCallback(() => {
     if (isPanning) {
       setIsPanning(false);
-       if (canvasRef.current) canvasRef.current.style.cursor = canvasMode === 'pan' ? 'grab' : 'default';
+      document.body.classList.remove('panning');
+      if (canvasRef.current) canvasRef.current.style.cursor = canvasMode === 'pan' ? 'grab' : 'default';
     }
-  }, [isPanning, canvasMode]);
+    if (draggingNodeId) {
+        setDraggingNodeId(null);
+    }
+  }, [isPanning, draggingNodeId, canvasMode]);
 
   const handleCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget && canvasMode === 'select') {
+    if (e.target === e.currentTarget && canvasMode === 'select' && !isPanning) {
       onNodeSelect(null);
       if (isConnecting) setIsConnecting(null);
     }
@@ -122,6 +166,14 @@ export default function AiCanvas({
       setIsConnecting(null);
     }
   }, [isConnecting, onAddConnection, canvasMode]);
+
+  const handleNodeMouseDown = (e: MouseEvent, nodeId: string) => {
+    if (canvasMode === 'select') {
+        setDraggingNodeId(nodeId);
+        dragStart.current = { x: e.clientX, y: e.clientY };
+        e.stopPropagation();
+    }
+  }
 
   const selectedNode = nodes.find((node) => node.id === selectedNodeId);
 
@@ -147,7 +199,10 @@ export default function AiCanvas({
   return (
     <div
       ref={canvasRef}
-      className="w-full h-full relative overflow-hidden"
+      className={cn(
+          "w-full h-full relative overflow-hidden",
+          {"panning": isPanning}
+      )}
       onClick={handleCanvasClick}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -190,6 +245,7 @@ export default function AiCanvas({
             onSelect={onNodeSelect}
             onStartConnection={handleStartConnection}
             onEndConnection={handleEndConnection}
+            onMouseDown={(e) => handleNodeMouseDown(e, node.id)}
             canvasMode={canvasMode}
           />
         ))}

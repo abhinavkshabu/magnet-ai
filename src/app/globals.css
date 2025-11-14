@@ -55,6 +55,9 @@
   body {
     @apply bg-background text-foreground;
   }
+  body.panning {
+    user-select: none;
+  }
 }
 
 @layer utilities {

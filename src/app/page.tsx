@@ -68,6 +68,15 @@ export default function AICanvasPage() {
     setSelectedNodeId(nodeId);
     setSuggestions(null); // Clear suggestions when selection changes
   };
+  
+  const handleNodePositionChange = (nodeId: string, newPosition: { x: number, y: number }) => {
+    setNodes(currentNodes => 
+      currentNodes.map(node => 
+        node.id === nodeId ? { ...node, position: newPosition } : node
+      )
+    );
+  };
+
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
 
@@ -164,6 +173,7 @@ export default function AICanvasPage() {
             selectedNodeId={selectedNodeId}
             onNodeSelect={handleNodeSelect}
             onAddConnection={handleAddConnection}
+            onNodePositionChange={handleNodePositionChange}
             suggestions={suggestions}
             isLoadingSuggestions={isSuggesting}
             isExecuting={isExecuting}

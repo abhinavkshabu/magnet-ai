@@ -17,6 +17,7 @@ import {
 import Header from '@/components/layout/header';
 import AiCanvas from '@/components/canvas/ai-canvas';
 import NodePropertiesSidebar from '@/components/layout/node-properties-sidebar';
+import ConnectionPropertiesSidebar from '@/components/layout/connection-properties-sidebar';
 import { initialNodes, initialConnections } from '@/lib/workflow-data';
 import type {
   WorkflowNode,
@@ -46,6 +47,7 @@ export default function AICanvasPage() {
   const [connections, setConnections] =
     useState<WorkflowConnection[]>(initialConnections);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [selectedConnection, setSelectedConnection] = useState<WorkflowConnection | null>(null);
   const [suggestions, setSuggestions] = useState<NodeSuggestion | null>(null);
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
@@ -60,14 +62,20 @@ export default function AICanvasPage() {
     );
     if (exists) return;
 
-    setConnections((prev) => [...prev, { from: from.nodeId, to: to.nodeId }]);
+    setConnections((prev) => [...prev, { id: `${from.nodeId}-${to.nodeId}`, from: from.nodeId, to: to.nodeId, prompt: '' }]);
   };
 
 
   const handleNodeSelect = (nodeId: string | null) => {
     setSelectedNodeId(nodeId);
+    setSelectedConnection(null);
     setSuggestions(null); // Clear suggestions when selection changes
   };
+
+  const handleConnectionSelect = (connection: WorkflowConnection | null) => {
+    setSelectedConnection(connection);
+    setSelectedNodeId(null);
+  }
   
   const handleNodePositionChange = (nodeId: string, newPosition: { x: number, y: number }) => {
     setNodes(currentNodes => 
@@ -81,6 +89,14 @@ export default function AICanvasPage() {
     setNodes(currentNodes =>
       currentNodes.map(node =>
         node.id === nodeId ? { ...node, ...updates } : node
+      )
+    );
+  };
+  
+  const handleConnectionUpdate = (connectionId: string, updates: Partial<Pick<WorkflowConnection, 'prompt'>>) => {
+    setConnections(currentConnections =>
+      currentConnections.map(conn =>
+        conn.id === connectionId ? { ...conn, ...updates } : conn
       )
     );
   };
@@ -179,7 +195,9 @@ export default function AICanvasPage() {
             nodes={nodes}
             connections={connections}
             selectedNodeId={selectedNodeId}
+            selectedConnectionId={selectedConnection?.id ?? null}
             onNodeSelect={handleNodeSelect}
+            onConnectionSelect={handleConnectionSelect}
             onAddConnection={handleAddConnection}
             onNodePositionChange={handleNodePositionChange}
             suggestions={suggestions}
@@ -194,6 +212,11 @@ export default function AICanvasPage() {
           onGetSuggestions={handleGetSuggestions}
           isSuggesting={isSuggesting}
           onNodeUpdate={handleNodeUpdate}
+        />
+        <ConnectionPropertiesSidebar
+          connection={selectedConnection}
+          onClose={() => handleConnectionSelect(null)}
+          onConnectionUpdate={handleConnectionUpdate}
         />
       </div>
     </div>

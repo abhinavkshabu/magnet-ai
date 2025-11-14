@@ -37,6 +37,6 @@ export const initialNodes: WorkflowNode[] = [
 ];
 
 export const initialConnections: WorkflowConnection[] = [
-  { from: 'node-1', to: 'node-2' },
-  { from: 'node-2', to: 'node-3' },
+  { id: 'node-1-node-2', from: 'node-1', to: 'node-2', prompt: 'If video is longer than 60 seconds.' },
+  { id: 'node-2-node-3', from: 'node-2', to: 'node-3' },
 ];

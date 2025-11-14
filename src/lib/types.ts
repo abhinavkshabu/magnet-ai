@@ -23,8 +23,10 @@ export type WorkflowNode = {
 };
 
 export type WorkflowConnection = {
+  id: string;
   from: string;
   to: string;
+  prompt?: string;
 };
 
 export type NodeSuggestion = SuggestNextNodesOutput;

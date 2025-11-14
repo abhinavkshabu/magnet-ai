@@ -13,7 +13,9 @@ type AiCanvasProps = {
   nodes: WorkflowNode[];
   connections: WorkflowConnection[];
   selectedNodeId: string | null;
+  selectedConnectionId: string | null;
   onNodeSelect: (nodeId: string | null) => void;
+  onConnectionSelect: (connection: WorkflowConnection | null) => void;
   onAddConnection: (from: Connector, to: Connector) => void;
   onNodePositionChange: (nodeId: string, newPosition: { x: number, y: number }) => void;
   suggestions: NodeSuggestion | null;
@@ -32,7 +34,9 @@ export default function AiCanvas({
   nodes,
   connections,
   selectedNodeId,
+  selectedConnectionId,
   onNodeSelect,
+  onConnectionSelect,
   onAddConnection,
   onNodePositionChange,
   suggestions,
@@ -104,7 +108,7 @@ export default function AiCanvas({
   };
   
   const handleMouseDown = useCallback((e: MouseEvent<HTMLDivElement>) => {
-    const isCanvasTarget = e.target === e.currentTarget;
+    const isCanvasTarget = e.target === e.currentTarget || (e.target as HTMLElement).classList.contains('recharts-responsive-container');
 
     if (canvasMode === 'pan' || (isCanvasTarget && !isConnecting)) {
       panStart.current = { x: e.clientX - view.x, y: e.clientY - view.y };
@@ -151,6 +155,7 @@ export default function AiCanvas({
   const handleCanvasClick = (e: MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget && canvasMode === 'select' && !isPanning) {
       onNodeSelect(null);
+      onConnectionSelect(null);
       if (isConnecting) setIsConnecting(null);
     }
   };
@@ -223,12 +228,15 @@ export default function AiCanvas({
             if (!fromNode || !toNode) return null;
             return (
               <NodeConnector
-                key={`${conn.from}-${conn.to}`}
+                key={conn.id}
+                connection={conn}
                 fromNode={fromNode}
                 toNode={toNode}
                 nodeWidth={NODE_WIDTH}
                 nodeHeight={NODE_HEIGHT}
                 isExecuting={isExecuting}
+                isSelected={conn.id === selectedConnectionId}
+                onSelect={onConnectionSelect}
               />
             );
           })}

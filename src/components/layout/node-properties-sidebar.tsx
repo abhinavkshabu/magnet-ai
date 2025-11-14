@@ -21,6 +21,7 @@ type NodePropertiesSidebarProps = {
   onClose: () => void;
   onGetSuggestions: () => void;
   isSuggesting: boolean;
+  onNodeUpdate: (nodeId: string, updates: Partial<Pick<WorkflowNode, 'name' | 'description'>>) => void;
 };
 
 export default function NodePropertiesSidebar({
@@ -28,6 +29,7 @@ export default function NodePropertiesSidebar({
   onClose,
   onGetSuggestions,
   isSuggesting,
+  onNodeUpdate,
 }: NodePropertiesSidebarProps) {
   return (
     <aside
@@ -48,14 +50,18 @@ export default function NodePropertiesSidebar({
           <div className="space-y-4 flex-1">
             <div className="space-y-2">
               <Label htmlFor="node-name">Node Name</Label>
-              <Input id="node-name" value={node.name} readOnly />
+              <Input
+                id="node-name"
+                value={node.name}
+                onChange={(e) => onNodeUpdate(node.id, { name: e.target.value })}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 value={node.description}
-                readOnly
+                onChange={(e) => onNodeUpdate(node.id, { description: e.target.value })}
                 className="h-24"
               />
             </div>

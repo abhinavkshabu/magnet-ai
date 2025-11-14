@@ -77,6 +77,14 @@ export default function AICanvasPage() {
     );
   };
 
+  const handleNodeUpdate = (nodeId: string, updates: Partial<Pick<WorkflowNode, 'name' | 'description'>>) => {
+    setNodes(currentNodes =>
+      currentNodes.map(node =>
+        node.id === nodeId ? { ...node, ...updates } : node
+      )
+    );
+  };
+
 
   const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
 
@@ -185,6 +193,7 @@ export default function AICanvasPage() {
           onClose={() => handleNodeSelect(null)}
           onGetSuggestions={handleGetSuggestions}
           isSuggesting={isSuggesting}
+          onNodeUpdate={handleNodeUpdate}
         />
       </div>
     </div>

@@ -21,7 +21,7 @@ type NodePropertiesSidebarProps = {
   onClose: () => void;
   onGetSuggestions: () => void;
   isSuggesting: boolean;
-  onNodeUpdate: (nodeId: string, updates: Partial<Pick<WorkflowNode, 'name' | 'description'>>) => void;
+  onNodeUpdate: (nodeId: string, updates: Partial<WorkflowNode>) => void;
 };
 
 export default function NodePropertiesSidebar({
@@ -31,6 +31,15 @@ export default function NodePropertiesSidebar({
   isSuggesting,
   onNodeUpdate,
 }: NodePropertiesSidebarProps) {
+    
+  const handleContentChange = (field: string, value: string) => {
+    if (node) {
+      onNodeUpdate(node.id, {
+        content: { ...node.content, [field]: value },
+      });
+    }
+  };
+    
   return (
     <aside
       className={cn(
@@ -77,13 +86,52 @@ export default function NodePropertiesSidebar({
             <div className="space-y-4">
               <Label>Configuration</Label>
               
-              {node.name === 'Webhook' && node.content?.url && (
+              {node.name === 'Webhook' && (
                 <div className="space-y-2">
                   <Label htmlFor="webhook-url" className="text-xs text-muted-foreground">Webhook URL</Label>
                   <Input
                     id="webhook-url"
                     readOnly
-                    value={node.content.url}
+                    value={node.content?.url || ''}
+                  />
+                </div>
+              )}
+               
+              {node.name === 'API Call Received' && (
+                <div className="space-y-2">
+                  <Label htmlFor="api-endpoint" className="text-xs text-muted-foreground">Endpoint</Label>
+                  <Input
+                    id="api-endpoint"
+                    value={node.content?.endpoint || ''}
+                    onChange={(e) => handleContentChange('endpoint', e.target.value)}
+                  />
+                </div>
+              )}
+
+              {node.name === 'On a Schedule' && (
+                 <div className="space-y-2">
+                  <Label htmlFor="schedule-interval" className="text-xs text-muted-foreground">Interval</Label>
+                  <Select value={node.content?.interval || 'daily'} onValueChange={(value) => handleContentChange('interval', value)}>
+                    <SelectTrigger id="schedule-interval">
+                      <SelectValue placeholder="Select interval" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hourly">Hourly</SelectItem>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {node.name === 'New Form Submission' && (
+                <div className="space-y-2">
+                  <Label htmlFor="form-id" className="text-xs text-muted-foreground">Form ID</Label>
+                  <Input
+                    id="form-id"
+                    value={node.content?.formId || ''}
+                    onChange={(e) => handleContentChange('formId', e.target.value)}
                   />
                 </div>
               )}

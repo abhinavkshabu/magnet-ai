@@ -16,9 +16,13 @@ export type WorkflowNode = {
     y: number;
   };
   content?: {
+    [key: string]: any;
     url?: string;
     imageUrl?: string;
     imageHint?: string;
+    endpoint?: string;
+    interval?: 'hourly' | 'daily' | 'weekly' | 'monthly';
+    formId?: string;
   };
 };
 

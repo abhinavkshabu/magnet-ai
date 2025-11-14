@@ -98,9 +98,20 @@ export default function AICanvasPage() {
       content: {}
     };
 
-    if (nodeDetails.name === 'Webhook') {
-        newNode.content = { url: 'https://api.example.com/webhook/123' };
-        newNode.icon = Webhook;
+    // Add specific content based on node name
+    switch (nodeDetails.name) {
+      case 'Webhook':
+        newNode.content = { url: 'https://api.example.com/webhook/' + Math.random().toString(36).substring(7) };
+        break;
+      case 'API Call Received':
+        newNode.content = { endpoint: '/api/v1/custom-event' };
+        break;
+      case 'On a Schedule':
+        newNode.content = { interval: 'daily' };
+        break;
+      case 'New Form Submission':
+        newNode.content = { formId: 'contact-form' };
+        break;
     }
 
     setNodes(prev => [...prev, newNode]);
@@ -182,7 +193,7 @@ export default function AICanvasPage() {
 
   const handleNodeUpdate = (
     nodeId: string,
-    updates: Partial<Pick<WorkflowNode, 'name' | 'description'>>
+    updates: Partial<WorkflowNode>
   ) => {
     setNodes((currentNodes) =>
       currentNodes.map((node) =>

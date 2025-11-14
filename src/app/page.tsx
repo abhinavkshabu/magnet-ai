@@ -13,6 +13,7 @@ import {
   MousePointer,
   Hand,
   Pencil,
+  Webhook,
 } from 'lucide-react';
 
 import Header from '@/components/layout/header';
@@ -94,7 +95,14 @@ export default function AICanvasPage() {
       description: nodeDetails.description,
       icon: nodeDetails.icon,
       position: { x: 400, y: 400 }, // Position should be more dynamic
+      content: {}
     };
+
+    if (nodeDetails.name === 'Webhook') {
+        newNode.content = { url: 'https://api.example.com/webhook/123' };
+        newNode.icon = Webhook;
+    }
+
     setNodes(prev => [...prev, newNode]);
     setIsTriggerDialogOpen(false);
     // Maybe select the new node

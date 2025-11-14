@@ -3,9 +3,20 @@ import type { WorkflowNode, WorkflowConnection } from './types';
 
 export const initialNodes: WorkflowNode[] = [
   {
+    id: 'node-webhook-trigger',
+    name: 'Webhook Trigger',
+    type: 'webhook',
+    description: 'Triggers on an incoming HTTP request.',
+    icon: Webhook,
+    position: { x: 50, y: 250 },
+    content: {
+      url: 'https://api.example.com/webhook/123',
+    }
+  },
+  {
     id: 'node-1',
     name: 'Live Feed: Studio Camera 1',
-    type: 'webhook',
+    type: 'iot',
     description: 'Capturing real-time footage for daily briefing.',
     icon: Video,
     position: { x: 200, y: 150 },

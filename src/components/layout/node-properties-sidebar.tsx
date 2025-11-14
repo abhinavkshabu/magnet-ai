@@ -74,9 +74,10 @@ export default function NodePropertiesSidebar({
                 <Badge variant="outline">API</Badge>
               </div>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-4">
               <Label>Configuration</Label>
-              {node.content?.url && (
+              
+              {node.name === 'Webhook' && node.content?.url && (
                 <div className="space-y-2">
                   <Label htmlFor="webhook-url" className="text-xs text-muted-foreground">Webhook URL</Label>
                   <Input
@@ -86,6 +87,7 @@ export default function NodePropertiesSidebar({
                   />
                 </div>
               )}
+              
                <div className="space-y-2">
                 <Label htmlFor="method" className="text-xs text-muted-foreground">Method</Label>
                 <Select defaultValue="post">

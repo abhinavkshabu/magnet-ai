@@ -9,14 +9,16 @@ import {
   Share2,
   Play,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 import { LogoIcon } from '../icons/logo-icon';
 
 type HeaderProps = {
   onRunWorkflow: () => void;
+  onDelete: () => void;
 };
 
-export default function Header({ onRunWorkflow }: HeaderProps) {
+export default function Header({ onRunWorkflow, onDelete }: HeaderProps) {
   return (
     <header className="sticky top-0 z-20 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur-sm sm:px-6">
       <div className="flex items-center gap-2">
@@ -37,6 +39,9 @@ export default function Header({ onRunWorkflow }: HeaderProps) {
         </Button>
         <Button variant="ghost" size="icon">
           <Redo className="h-4 w-4" />
+        </Button>
+        <Button variant="ghost" size="icon" onClick={onDelete}>
+          <Trash2 className="h-4 w-4" />
         </Button>
       </div>
 

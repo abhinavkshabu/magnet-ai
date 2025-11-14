@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Plus,
   Zap,
@@ -52,6 +52,44 @@ export default function AICanvasPage() {
   const [isSuggesting, setIsSuggesting] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('select');
+
+  const handleDelete = () => {
+    if (selectedNodeId) {
+      setNodes(prev => prev.filter(n => n.id !== selectedNodeId));
+      setConnections(prev => prev.filter(c => c.from !== selectedNodeId && c.to !== selectedNodeId));
+      setSelectedNodeId(null);
+    } else if (selectedConnection) {
+      setConnections(prev => prev.filter(c => c.id !== selectedConnection.id));
+      setSelectedConnection(null);
+    } else {
+      toast({
+        title: 'Nothing selected',
+        description: 'Please select a node or connection to delete.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't delete if user is typing in an input, textarea, etc.
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) {
+        return;
+      }
+      
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault();
+        handleDelete();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedNodeId, selectedConnection]);
 
 
   const handleAddConnection = (from: Connector, to: Connector) => {
@@ -151,7 +189,7 @@ export default function AICanvasPage() {
 
   return (
     <div className="h-screen w-screen overflow-hidden flex flex-col">
-      <Header onRunWorkflow={handleRunWorkflow} />
+      <Header onRunWorkflow={handleRunWorkflow} onDelete={handleDelete} />
       <div className="flex-1 flex relative overflow-hidden">
         <main className="flex-1 relative overflow-hidden">
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2">

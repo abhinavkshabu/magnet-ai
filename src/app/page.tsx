@@ -56,6 +56,7 @@ export default function AICanvasPage() {
   const [connections, setConnections] =
     useState<WorkflowConnection[]>(initialConnections);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [sidebarOpenForNodeId, setSidebarOpenForNodeId] = useState<string | null>(null);
   const [selectedConnection, setSelectedConnection] =
     useState<WorkflowConnection | null>(null);
   const [suggestions, setSuggestions] = useState<NodeSuggestion | null>(null);
@@ -73,6 +74,7 @@ export default function AICanvasPage() {
         )
       );
       setSelectedNodeId(null);
+      setSidebarOpenForNodeId(null);
     } else if (selectedConnection) {
       setConnections((prev) =>
         prev.filter((c) => c.id !== selectedConnection.id)
@@ -117,7 +119,10 @@ export default function AICanvasPage() {
     setNodes(prev => [...prev, newNode]);
     setIsTriggerDialogOpen(false);
     // Maybe select the new node
-    setTimeout(() => handleNodeSelect(newNode.id), 50);
+    setTimeout(() => {
+        handleNodeSelect(newNode.id);
+        handleNodeDoubleClick(newNode.id);
+    }, 50);
   };
   
   const handleAddCustomNode = () => {
@@ -172,12 +177,19 @@ export default function AICanvasPage() {
   const handleNodeSelect = (nodeId: string | null) => {
     setSelectedNodeId(nodeId);
     setSelectedConnection(null);
-    setSuggestions(null); // Clear suggestions when selection changes
+    if (nodeId) {
+      setSuggestions(null); // Clear suggestions when selection changes
+    }
+  };
+
+  const handleNodeDoubleClick = (nodeId: string) => {
+    setSidebarOpenForNodeId(nodeId);
   };
 
   const handleConnectionSelect = (connection: WorkflowConnection | null) => {
     setSelectedConnection(connection);
     setSelectedNodeId(null);
+    setSidebarOpenForNodeId(null);
   };
 
   const handleNodePositionChange = (
@@ -213,7 +225,7 @@ export default function AICanvasPage() {
     );
   };
 
-  const selectedNode = nodes.find((n) => n.id === selectedNodeId) ?? null;
+  const selectedNodeForSidebar = nodes.find((n) => n.id === sidebarOpenForNodeId) ?? null;
 
   const handleGetSuggestions = async () => {
     if (!selectedNodeId) {
@@ -323,6 +335,7 @@ export default function AICanvasPage() {
             selectedNodeId={selectedNodeId}
             selectedConnectionId={selectedConnection?.id ?? null}
             onNodeSelect={handleNodeSelect}
+            onNodeDoubleClick={handleNodeDoubleClick}
             onConnectionSelect={handleConnectionSelect}
             onAddConnection={handleAddConnection}
             onNodePositionChange={handleNodePositionChange}
@@ -333,8 +346,8 @@ export default function AICanvasPage() {
           />
         </main>
         <NodePropertiesSidebar
-          node={selectedNode}
-          onClose={() => handleNodeSelect(null)}
+          node={selectedNodeForSidebar}
+          onClose={() => setSidebarOpenForNodeId(null)}
           onGetSuggestions={handleGetSuggestions}
           isSuggesting={isSuggesting}
           onNodeUpdate={handleNodeUpdate}

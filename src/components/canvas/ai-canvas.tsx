@@ -15,6 +15,7 @@ type AiCanvasProps = {
   selectedNodeId: string | null;
   selectedConnectionId: string | null;
   onNodeSelect: (nodeId: string | null) => void;
+  onNodeDoubleClick: (nodeId: string) => void;
   onConnectionSelect: (connection: WorkflowConnection | null) => void;
   onAddConnection: (from: Connector, to: Connector) => void;
   onNodePositionChange: (nodeId: string, newPosition: { x: number, y: number }) => void;
@@ -36,6 +37,7 @@ export default function AiCanvas({
   selectedNodeId,
   selectedConnectionId,
   onNodeSelect,
+  onNodeDoubleClick,
   onConnectionSelect,
   onAddConnection,
   onNodePositionChange,
@@ -174,6 +176,7 @@ export default function AiCanvas({
 
   const handleNodeMouseDown = (e: MouseEvent, nodeId: string) => {
     if (canvasMode === 'select') {
+        onNodeSelect(nodeId);
         setDraggingNodeId(nodeId);
         dragStart.current = { x: e.clientX, y: e.clientY };
         e.stopPropagation();
@@ -251,6 +254,7 @@ export default function AiCanvas({
             node={node}
             isSelected={node.id === selectedNodeId}
             onSelect={onNodeSelect}
+            onDoubleClick={onNodeDoubleClick}
             onStartConnection={handleStartConnection}
             onEndConnection={handleEndConnection}
             onMouseDown={(e) => handleNodeMouseDown(e, node.id)}

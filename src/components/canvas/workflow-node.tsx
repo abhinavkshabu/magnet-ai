@@ -9,6 +9,7 @@ type WorkflowNodeProps = {
   node: WorkflowNode;
   isSelected: boolean;
   onSelect: (nodeId: string) => void;
+  onDoubleClick: (nodeId: string) => void;
   onStartConnection: (connector: Connector) => void;
   onEndConnection: (connector: Connector) => void;
   onMouseDown: (e: React.MouseEvent) => void;
@@ -42,6 +43,7 @@ export default function WorkflowNodeComponent({
   node,
   isSelected,
   onSelect,
+  onDoubleClick,
   onStartConnection,
   onEndConnection,
   onMouseDown,
@@ -70,6 +72,12 @@ export default function WorkflowNodeComponent({
     e.stopPropagation();
     onSelect(node.id);
   }
+  
+  const handleNodeDoubleClick = (e: React.MouseEvent) => {
+    if (canvasMode !== 'select') return;
+    e.stopPropagation();
+    onDoubleClick(node.id);
+  };
 
   const handleNodeMouseDown = (e: React.MouseEvent) => {
     if (canvasMode === 'select') {
@@ -86,6 +94,7 @@ export default function WorkflowNodeComponent({
       )}
       style={{ top: `${node.position.y}px`, left: `${node.position.x}px` }}
       onClick={handleNodeClick}
+      onDoubleClick={handleNodeDoubleClick}
       onMouseDown={handleNodeMouseDown}
     >
       <div

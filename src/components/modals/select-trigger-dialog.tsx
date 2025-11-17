@@ -27,7 +27,13 @@ import type { NodeType } from '@/lib/types';
 
 const triggerCategories = ['All', 'By Schedule', 'By App', 'Webhooks', 'Manual'];
 
-const triggerItems = [
+const triggerItems: Array<{
+  icon: React.ElementType;
+  name: string;
+  description: string;
+  category: string;
+  type: string;
+}> = [
   {
     icon: Clock,
     name: 'On a Schedule',
@@ -82,7 +88,7 @@ const triggerItems = [
 type SelectTriggerDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddNode: (nodeDetails: { name: string, description: string, icon: React.ElementType, type: NodeType }) => void;
+  onAddNode: (nodeDetails: { name: string, description: string, icon: React.ElementType, type: string }) => void;
 };
 
 export default function SelectTriggerDialog({ open, onOpenChange, onAddNode }: SelectTriggerDialogProps) {

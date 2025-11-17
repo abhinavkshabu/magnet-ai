@@ -39,6 +39,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { useWorkflow } from '@/hooks/use-workflow';
 
 const nodeCategories = [
   { icon: Zap, name: 'Trigger' },
@@ -52,9 +53,11 @@ const nodeCategories = [
 
 export default function AICanvasPage() {
   const { toast } = useToast();
-  const [nodes, setNodes] = useState<WorkflowNode[]>(initialNodes);
-  const [connections, setConnections] =
-    useState<WorkflowConnection[]>(initialConnections);
+  const [workflowId, setWorkflowId] = useState<string | null>(null);
+  const { workflow, isLoading, isSaving, updateNodes, updateConnections, createWorkflow } = useWorkflow(workflowId);
+  
+  const nodes = workflow?.nodes || initialNodes;
+  const connections = workflow?.connections || initialConnections;
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [sidebarOpenForNodeId, setSidebarOpenForNodeId] = useState<string | null>(null);
   const [selectedConnection, setSelectedConnection] =
@@ -65,20 +68,49 @@ export default function AICanvasPage() {
   const [canvasMode, setCanvasMode] = useState<CanvasMode>('select');
   const [isTriggerDialogOpen, setIsTriggerDialogOpen] = useState(false);
 
+  // Initialize workflow on first load
+  useEffect(() => {
+    const initWorkflow = async () => {
+      // Check if we have a workflow ID in URL or localStorage
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlWorkflowId = urlParams.get('workflowId');
+      
+      if (urlWorkflowId) {
+        setWorkflowId(urlWorkflowId);
+      } else {
+        // Create a default workflow for demo
+        try {
+          const newWorkflow = await createWorkflow({
+            name: 'My AI Workflow',
+            description: 'A visual workflow for AI automation',
+            nodes: initialNodes,
+            connections: initialConnections,
+          });
+          setWorkflowId(newWorkflow.id);
+          // Update URL without reload
+          window.history.replaceState({}, '', `?workflowId=${newWorkflow.id}`);
+        } catch (error) {
+          console.error('Failed to create initial workflow:', error);
+        }
+      }
+    };
+
+    initWorkflow();
+  }, []);
+
   const handleDelete = () => {
     if (selectedNodeId) {
-      setNodes((prev) => prev.filter((n) => n.id !== selectedNodeId));
-      setConnections((prev) =>
-        prev.filter(
-          (c) => c.from !== selectedNodeId && c.to !== selectedNodeId
-        )
+      const updatedNodes = nodes.filter((n) => n.id !== selectedNodeId);
+      const updatedConnections = connections.filter(
+        (c) => c.from !== selectedNodeId && c.to !== selectedNodeId
       );
+      updateNodes(updatedNodes);
+      updateConnections(updatedConnections);
       setSelectedNodeId(null);
       setSidebarOpenForNodeId(null);
     } else if (selectedConnection) {
-      setConnections((prev) =>
-        prev.filter((c) => c.id !== selectedConnection.id)
-      );
+      const updatedConnections = connections.filter((c) => c.id !== selectedConnection.id);
+      updateConnections(updatedConnections);
       setSelectedConnection(null);
     } else {
       toast({
@@ -89,13 +121,13 @@ export default function AICanvasPage() {
     }
   };
 
-  const handleAddNode = (nodeDetails: { name: string, description: string, icon: React.ElementType, type: NodeType }) => {
+  const handleAddNode = (nodeDetails: { name: string, description: string, icon: React.ElementType, type: string }) => {
     const newNode: WorkflowNode = {
       id: `node-${Date.now()}`,
       name: nodeDetails.name,
-      type: nodeDetails.type,
+      type: nodeDetails.type as NodeType,
       description: nodeDetails.description,
-      icon: nodeDetails.icon,
+      icon: nodeDetails.icon as any,
       position: { x: 400, y: 400 }, // Position should be more dynamic
       content: {}
     };
@@ -116,7 +148,7 @@ export default function AICanvasPage() {
         break;
     }
 
-    setNodes(prev => [...prev, newNode]);
+    updateNodes([...nodes, newNode]);
     setIsTriggerDialogOpen(false);
     // Maybe select the new node
     setTimeout(() => {
@@ -163,8 +195,8 @@ export default function AICanvasPage() {
     );
     if (exists) return;
 
-    setConnections((prev) => [
-      ...prev,
+    updateConnections([
+      ...connections,
       {
         id: `${from.nodeId}-${to.nodeId}`,
         from: from.nodeId,
@@ -196,33 +228,30 @@ export default function AICanvasPage() {
     nodeId: string,
     newPosition: { x: number; y: number }
   ) => {
-    setNodes((currentNodes) =>
-      currentNodes.map((node) =>
-        node.id === nodeId ? { ...node, position: newPosition } : node
-      )
+    const updatedNodes = nodes.map((node) =>
+      node.id === nodeId ? { ...node, position: newPosition } : node
     );
+    updateNodes(updatedNodes);
   };
 
   const handleNodeUpdate = (
     nodeId: string,
     updates: Partial<WorkflowNode>
   ) => {
-    setNodes((currentNodes) =>
-      currentNodes.map((node) =>
-        node.id === nodeId ? { ...node, ...updates } : node
-      )
+    const updatedNodes = nodes.map((node) =>
+      node.id === nodeId ? { ...node, ...updates } : node
     );
+    updateNodes(updatedNodes);
   };
 
   const handleConnectionUpdate = (
     connectionId: string,
     updates: Partial<Pick<WorkflowConnection, 'prompt'>>
   ) => {
-    setConnections((currentConnections) =>
-      currentConnections.map((conn) =>
-        conn.id === connectionId ? { ...conn, ...updates } : conn
-      )
+    const updatedConnections = connections.map((conn) =>
+      conn.id === connectionId ? { ...conn, ...updates } : conn
     );
+    updateConnections(updatedConnections);
   };
 
   const selectedNodeForSidebar = nodes.find((n) => n.id === sidebarOpenForNodeId) ?? null;
@@ -284,6 +313,22 @@ export default function AICanvasPage() {
       <Header onRunWorkflow={handleRunWorkflow} onDelete={handleDelete} />
       <div className="flex-1 flex relative overflow-hidden">
         <main className="flex-1 relative overflow-hidden">
+          {/* Loading overlay */}
+          {isLoading && (
+            <div className="absolute inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-sm text-muted-foreground">Loading workflow...</p>
+              </div>
+            </div>
+          )}
+          {/* Saving indicator */}
+          {isSaving && (
+            <div className="absolute top-4 right-4 z-10 bg-card border rounded-md px-3 py-2 shadow-sm flex items-center gap-2">
+              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-primary"></div>
+              <span className="text-xs text-muted-foreground">Saving...</span>
+            </div>
+          )}
           <div className="absolute top-4 left-4 z-10 flex items-center gap-2">
             <div className="flex items-center gap-1 p-1 bg-card rounded-md border shadow-sm">
               <TooltipProvider delayDuration={100}>

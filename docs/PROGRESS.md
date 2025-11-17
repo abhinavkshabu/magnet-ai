@@ -237,4 +237,34 @@
 
 ---
 
-*Last Updated: Session 1 - Backend Foundation Complete*
+## 📝 Session 2 Update (Just Completed!)
+
+### ✅ Frontend-Backend Integration Complete!
+
+**New Files Created:**
+- ✅ `src/lib/api/client.ts` - API client utilities
+- ✅ `src/hooks/use-workflow.ts` - Workflow management hook
+
+**Files Updated:**
+- ✅ `src/app/page.tsx` - Now uses real backend
+- ✅ `src/app/api/workflows/route.ts` - Fixed route handlers
+- ✅ `src/lib/db/executions.ts` - Fixed TypeScript error
+
+**What Now Works:**
+- ✅ Workflows persist in Firestore
+- ✅ Auto-save on every change
+- ✅ Loading states and indicators
+- ✅ Shareable workflow URLs
+- ✅ Automatic workflow initialization
+
+**Try it:**
+```bash
+npm run dev
+# Visit http://localhost:9002
+# Make changes - they auto-save!
+# Refresh - everything persists!
+```
+
+---
+
+*Last Updated: Session 2 - Frontend Connected to Backend with Auto-Save!*

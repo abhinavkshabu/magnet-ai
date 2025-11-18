@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import type { SuggestNextNodesOutput } from '@/ai/flows/suggest-next-nodes';
 
-export type NodeType = 'webhook' | 'llm' | 'output' | 'logic' | 'iot' | 'api';
+export type NodeType = 'webhook' | 'llm' | 'vision' | 'output' | 'logic' | 'iot' | 'api';
 
 export type CanvasMode = 'select' | 'pan';
 

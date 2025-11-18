@@ -7,6 +7,7 @@ import type { NodeType } from '@/lib/types';
 import type { NodeExecutor } from '../types';
 import { WebhookExecutor } from './webhook';
 import { LLMExecutor } from './llm';
+import { VisionExecutor } from './vision';
 import { APIExecutor } from './api';
 import { IoTExecutor } from './iot';
 import { OutputExecutor } from './output';
@@ -29,6 +30,7 @@ class ExecutorRegistry {
   private registerDefaultExecutors() {
     this.register('webhook', new WebhookExecutor());
     this.register('llm', new LLMExecutor());
+    this.register('vision', new VisionExecutor());
     this.register('api', new APIExecutor());
     this.register('iot', new IoTExecutor());
     this.register('output', new OutputExecutor());
@@ -63,6 +65,7 @@ export const executorRegistry = new ExecutorRegistry();
 // Export individual executors
 export { WebhookExecutor } from './webhook';
 export { LLMExecutor } from './llm';
+export { VisionExecutor } from './vision';
 export { APIExecutor } from './api';
 export { IoTExecutor } from './iot';
 export { OutputExecutor } from './output';

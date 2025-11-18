@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test:api": "tsx scripts/test-api.ts",
     "test:execution": "tsx scripts/test-execution.ts",
+    "test:vision": "tsx scripts/test-vision.ts",
     "check:setup": "tsx scripts/check-setup.ts"
   },
   "dependencies": {

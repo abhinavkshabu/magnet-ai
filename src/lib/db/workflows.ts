@@ -59,10 +59,11 @@ export async function getUserWorkflows(userId: string): Promise<DbWorkflow[]> {
   const snapshot = await db
     .collection(COLLECTIONS.WORKFLOWS)
     .where('userId', '==', userId)
-    .orderBy('updatedAt', 'desc')
     .get();
   
-  return docsToObjects<DbWorkflow>(snapshot);
+  // Sort in memory instead of using Firestore orderBy to avoid index requirement
+  const workflows = docsToObjects<DbWorkflow>(snapshot);
+  return workflows.sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime());
 }
 
 /**

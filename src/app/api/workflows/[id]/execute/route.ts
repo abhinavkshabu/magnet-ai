@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getWorkflow } from '@/lib/db/workflows';
+import { WorkflowOrchestrator } from '@/lib/execution/orchestrator';
 import { createExecution, startExecution, completeExecution, failExecution, addExecutionLog } from '@/lib/db/executions';
 
 /**
@@ -40,8 +41,27 @@ export async function POST(
       triggerData: body,
     });
     
+    // Validate workflow has nodes
+    if (!workflow.nodes || workflow.nodes.length === 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Workflow has no nodes to execute',
+        },
+        { status: 400 }
+      );
+    }
+    
+    // Create orchestrator
+    const orchestrator = new WorkflowOrchestrator(
+      workflowId,
+      workflow.nodes,
+      workflow.connections || [],
+      body
+    );
+    
     // Start execution in background (don't await)
-    executeWorkflowInBackground(execution.id, workflow, body).catch(error => {
+    executeWorkflowInBackground(execution.id, orchestrator).catch((error) => {
       console.error('Background execution failed:', error);
     });
     
@@ -66,13 +86,11 @@ export async function POST(
 }
 
 /**
- * Execute workflow in background
- * This is a placeholder - we'll implement the real execution engine later
+ * Execute workflow in background using the orchestrator
  */
 async function executeWorkflowInBackground(
   executionId: string,
-  workflow: any,
-  triggerData: any
+  orchestrator: WorkflowOrchestrator
 ) {
   try {
     // Start execution
@@ -84,39 +102,34 @@ async function executeWorkflowInBackground(
       nodeId: 'system',
       nodeName: 'System',
       level: 'info',
-      message: `Workflow execution started: ${workflow.name}`,
-      data: { triggerData },
+      message: 'Workflow execution started',
     });
     
-    // TODO: Implement actual workflow execution logic
-    // For now, simulate execution
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Execute the workflow
+    const result = await orchestrator.execute();
     
-    // Simulate processing each node
-    for (const node of workflow.nodes) {
+    if (!result.success) {
+      console.error('Workflow execution failed:', result.error);
+      await failExecution(executionId, result.error || 'Unknown error');
       await addExecutionLog({
         executionId,
-        nodeId: node.id,
-        nodeName: node.name,
-        level: 'info',
-        message: `Processing node: ${node.name}`,
-        data: { nodeType: node.type },
+        nodeId: 'system',
+        nodeName: 'System',
+        level: 'error',
+        message: 'Workflow execution failed',
+        data: { error: result.error },
       });
-      
-      // Simulate node processing time
-      await new Promise(resolve => setTimeout(resolve, 500));
+    } else {
+      console.log('Workflow execution completed:', result.executionId);
+      await completeExecution(executionId);
+      await addExecutionLog({
+        executionId,
+        nodeId: 'system',
+        nodeName: 'System',
+        level: 'info',
+        message: 'Workflow execution completed successfully',
+      });
     }
-    
-    // Complete execution
-    await completeExecution(executionId);
-    
-    await addExecutionLog({
-      executionId,
-      nodeId: 'system',
-      nodeName: 'System',
-      level: 'info',
-      message: 'Workflow execution completed successfully',
-    });
   } catch (error) {
     console.error('Execution error:', error);
     
@@ -127,7 +140,7 @@ async function executeWorkflowInBackground(
       nodeId: 'system',
       nodeName: 'System',
       level: 'error',
-      message: 'Workflow execution failed',
+      message: 'Workflow execution failed with exception',
       data: { error: error instanceof Error ? error.message : 'Unknown error' },
     });
   }

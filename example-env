@@ -1,0 +1,70 @@
+# ============================================
+# Firebase Configuration (REQUIRED)
+# ============================================
+# Get these from Firebase Console > Project Settings > Service Accounts
+# 1. Go to: https://console.firebase.google.com/project/YOUR_PROJECT/settings/serviceaccounts/adminsdk
+# 2. Click "Generate new private key"
+# 3. Copy the entire JSON content and format it as a single-line string (remove all newlines)
+# 4. Paste it below as the value for FIREBASE_SERVICE_ACCOUNT
+FIREBASE_SERVICE_ACCOUNT={"type":"service_account","project_id":"your-project-id","private_key_id":"...","private_key":"...","client_email":"...","client_id":"...","auth_uri":"https://accounts.google.com/o/oauth2/auth","token_uri":"https://oauth2.googleapis.com/token","auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs","client_x509_cert_url":"...","universe_domain":"googleapis.com"}
+
+# Firestore Database ID (REQUIRED if not using default database)
+# Find this in Firebase Console > Firestore Database
+# If you see a database named something other than "(default)", specify it here
+# Example: If your database is named "magnet-ai", use: FIRESTORE_DATABASE_ID=magnet-ai
+FIRESTORE_DATABASE_ID=(default)
+
+# Firebase Realtime Database URL (Optional - only needed for Realtime Database features)
+FIREBASE_DATABASE_URL=https://your-project-id.firebaseio.com
+
+# ============================================
+# AI Provider API Keys (REQUIRED for LLM features)
+# ============================================
+
+# Google AI (Gemini) - Primary AI provider
+# Get from: https://makersuite.google.com/app/apikey
+GOOGLE_GENAI_API_KEY=your_google_ai_api_key_here
+
+# OpenAI (Optional - for multi-provider support)
+# Get from: https://platform.openai.com/api-keys
+OPENAI_API_KEY=your_openai_api_key_here
+
+# Anthropic (Optional - for Claude support)
+# Get from: https://console.anthropic.com/settings/keys
+ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Groq (Optional - for fast inference)
+# Get from: https://console.groq.com/keys
+GROQ_API_KEY=your_groq_api_key_here
+
+# ============================================
+# Application Settings
+# ============================================
+
+# Environment
+NODE_ENV=development
+
+# Application URL (used for webhooks and redirects)
+NEXT_PUBLIC_APP_URL=http://localhost:9002
+
+# ============================================
+# Security (REQUIRED for production)
+# ============================================
+
+# JWT Secret - Generate a strong random string
+# You can use: openssl rand -base64 32
+JWT_SECRET=your_jwt_secret_here_change_in_production
+
+# Webhook Secret - Used to verify incoming webhooks
+WEBHOOK_SECRET=your_webhook_secret_here
+
+# ============================================
+# Optional Services
+# ============================================
+
+# Redis (Optional - for caching and job queue)
+REDIS_URL=redis://localhost:6379
+
+# Rate Limiting
+RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_WINDOW_MS=60000
